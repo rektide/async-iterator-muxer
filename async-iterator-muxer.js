@@ -5,17 +5,15 @@ import defer from "p-defer"
 * Unfold a promise into something which will always resolve, either with `value` or `error`.
 * Additionall attach an `index` field with the index number of this item in a collection.
 */
-async function resolveNext( iterator, index){
+async function resolveNext( iterator){
 	try{
 		var val= await iter.next()
-		val.index= index
 		val.iterator= iterator
 		return val
 	}catch( error){
 		return {
 			error,
 			done: true,
-			index,
 			iterator
 		}
 	}
@@ -36,32 +34,42 @@ export class AsyncIteratorMuxer extends Bound{
 	}
 	async [ Symbol.asyncIterator]*(){
 		while( true){
+			if( this.awaitingIterable){
+				// sleep until we have a new iterable to await
+				await this.awaitingIterable.promise
+				// resume normal looping now that we have something to iterate
+				delete this.awaitingIterable
+			}
+
 			// get next element. because of resolveNext's nature this will never throw.
-			// TODO - allow a "terminator" signal to cancel early
 			var
 			  cur= await Promise.race( this.nexts),
-			  returnValue
+			  index= this.iterators.indexOf( cur.iterator),
+			  // by default return the value
+			  returnValue= !this.leaveWrapped? cur.value: cur
 
-			if( cur.rejected){
-				// this will have hit above `done` logic
-				try{
-					returnValue= this.onreject&& this.onreject( cur, this)
-				}catch(error){
-					throw error
-				}
+			// pre- hooks
+			// spent a while getting fancy with interface & contract for how these might work
+			// lower level than desireable, but modify in place vastly simplified this codebase &
+			// no worse than almost all alternative ideas I cooked up
+			if( cur.resolved&& this.onresolve){
+				await this.onresolve( cur, this)
+			}
+			if( cur.rejected&& this.onreject){
+				await this.onreject( cur, this)
 			}
 
 			// handle end of whichever iterator
 			if( cur.done){
 				// remove this iterator
-				this.iterators.splice( cur.index, 1)
-				this.nexts.splice( cur.index, 1)
+				this.iterators.splice( index, 1)
+				this.nexts.splice( index, 1)
+
 				// handle running out of iterators
-				if( this.iterators.length=== 1){
+				if( this.iterators.length=== 0){
 					if( !this.leaveOpen){
-						// terminate looping
-						/// UGH: need to handle rejected here too
-						return returnValue
+						// terminate looping - default
+						done= true
 					}else{
 						// in `leaveOpen` mode we await additional 
 						// wait for a new iterator to be added
@@ -72,11 +80,11 @@ export class AsyncIteratorMuxer extends Bound{
 					}
 				}
 			}else{
-				yield this.resultWrapper? returnValue: returnValue.value
+				// we've consumed the current "next", so advance
+				this.nexts[ index]= this.iterators[ index].next()
 			}
 
-
-			// get next
+			yield returnValue
 		}
 	}
 	add( iterable){
