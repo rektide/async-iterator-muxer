@@ -1,0 +1,27 @@
+{
+	"name": "async-iterator-muxer",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://archive.voodoowarez.com/async-iterator-muxer"
+	},
+	"keywords": [],
+	"author": "rektide de la faye",
+	"license": "MIT",
+	"module": "async-iterator-muxer.js",
+	"esm": true,
+	"@std/esm": {
+		"esm": "js",
+		"cjs": {
+			"namedExports": true
+		}
+	},
+	"dependencies": {
+		"extensible-function": "^1.1.1"
+	}
+}
