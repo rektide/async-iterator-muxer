@@ -1,16 +1,18 @@
 {
 	"name": "async-iterator-muxer",
-	"version": "1.0.0",
-	"description": "",
+	"version": "1.0.1",
+	"description": "Mux/multiplex together multiple sync and async iterables or iterators into one async iterator.",
 	"main": "index.js",
 	"scripts": {
-		"test": "node --harmony_async_iteration .test"
+		"test": "node --harmony_async_iteration .test",
+		"example": "node --harmony_async_iteration .example/sample-generator.js",
+		"sample-generator": "node --harmony_async_iteration .example/sample-generator.js"
 	},
 	"repository": {
 		"type": "git",
 		"url": "https://archive.voodoowarez.com/async-iterator-muxer"
 	},
-	"keywords": [],
+	"keywords": ["mux", "multiple", "async-iteration"],
 	"author": "rektide de la faye",
 	"license": "MIT",
 	"module": "async-iterator-muxer.js",
@@ -23,7 +25,6 @@
 	},
 	"dependencies": {
 		"@std/esm": "^0.21.5",
-		"extensible-function": "^1.1.1",
 		"p-defer": "^1.0.0"
 	},
 	"devDependencies": {
