@@ -7,7 +7,7 @@ import defer from "p-defer"
 */
 async function resolveNext( iterator){
 	try{
-		var val= await iter.next()
+		var val= await iterator.next()
 		val.iterator= iterator
 		return val
 	}catch( error){
@@ -23,16 +23,16 @@ export class AsyncIteratorMuxer extends Bound{
 	/**
 	* @param iterables - collection of async or sync iterables, or iterators
 	*/
-	constructor( iterables, options){
+	constructor( options, iterables){
 		super( AsyncIteratorMuxer.prototype[ Symbol.asyncIterator])
 		this.iterators= []
 		this.nexts= []
 		Object.assign( this, options)
-		for( var i of iterables|| {}){
+		for( var i of iterables|| []){
 			this.add( i)
 		}	
 	}
-	async [ Symbol.asyncIterator]*(){
+	async *[ Symbol.asyncIterator](){
 		while( true){
 			if( this.awaitingIterable){
 				// sleep until we have a new iterable to await
@@ -44,9 +44,8 @@ export class AsyncIteratorMuxer extends Bound{
 			// get next element. because of resolveNext's nature this will never throw.
 			var
 			  cur= await Promise.race( this.nexts),
-			  index= this.iterators.indexOf( cur.iterator),
-			  // by default return the value
-			  returnValue= !this.leaveWrapped? cur.value: cur
+			  index= this.iterators.indexOf( cur.iterator)
+			console.log({cur})
 
 			// pre- hooks
 			// spent a while getting fancy with interface & contract for how these might work
@@ -60,6 +59,8 @@ export class AsyncIteratorMuxer extends Bound{
 			}
 
 			// handle end of whichever iterator
+			// by default, return the value
+			var returnValue= !this.leaveWrapped? cur.value: cur
 			if( cur.done){
 				// remove this iterator
 				this.iterators.splice( index, 1)
@@ -69,7 +70,7 @@ export class AsyncIteratorMuxer extends Bound{
 				if( this.iterators.length=== 0){
 					if( !this.leaveOpen){
 						// terminate looping - default
-						done= true
+						return returnValue
 					}else{
 						// in `leaveOpen` mode we await additional 
 						// wait for a new iterator to be added
@@ -88,13 +89,27 @@ export class AsyncIteratorMuxer extends Bound{
 		}
 	}
 	add( iterable){
-		var
-		  asyncIter= iterable[ Symbol.asyncIterator],
-		  syncIter= iterable[ Symbol.iterator]
-		  iterator= asyncIter|| syncIter|| iterable,
-		  next= resolveNext( iterator)
+		// find an iterator
+		var iterator
+		if( iterable[ Symbol.asyncIterator]){
+			iterator= iterable[ Symbol.asyncIterator]()
+		}else if( iterable[ Symbol.iterator]){
+			iterator= iterable[ Symbol.iterator]()
+		}
+		if( !iterator&& iterable.next){
+			// allow iterators directly to be passed in too
+			iterator= iterable
+		}
+
+		// wrap iterator
+		var next= resolveNext( iterator)
+
+		// add it to our collection of iterators
 		this.iterators.push( iterator)
 		this.nexts.push( next)
+
+		// if we are iterating in `leaveOpen` mode & run out of stuff,
+		// now is the time when we have new stuff! signal to it.
 		if( this.awaitingIterable){
 			this.awaitingIterable.resolve()
 		}

@@ -3,8 +3,6 @@ var
   AsyncIteratorMuxer= require( ".."),
   tape= require( "tape")
 
-console.log(AsyncIteratorMuxer)
-
 async function muxerRun( options, ...inputs){
 	var
 	  muxer= new AsyncIteratorMuxer( options),
