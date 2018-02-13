@@ -16,17 +16,24 @@ async function Delay( min, max){
 
 async function *SampleGenerator( name, t){
 	t= t|| 0
+	// iterate this many times
 	var remaining= results
+
+	// in each loop, delay, then produce a result
 	async function loop(){
 		var delay= await Delay()
 		t+= delay
 		return {t, delay, remaining, name}
 	}
+	// yield, for however many iterations we have
 	while( remaining--){
 		yield loop()
 	}
-	var result= loop()
-	result.done= true
+
+	// return a final result
+	var result= await loop()
+	// mark it up just to be super clear
+	result.isResult= true
 	return result
 }
 
@@ -50,8 +57,10 @@ proto.then(async function(){
 	console.log("ok SampleGenerator delivers some results over time")
 	console.log("")
 	console.log("lets see what happens when we feed multiple SampleGenerators into async-iterator-muxer")
-	var muxer= new (require( ".."))()
-	muxer.add( SampleGenerator( "alpha"))
+	var
+	  muxer= new (require( ".."))(),
+	  alpha= SampleGenerator( "alpha")
+	muxer.add( alpha)
 	muxer.add( SampleGenerator( "beta"))
 	// to be REALLY tricky we'll add this one late
 	Delay( 4000, 4000).then( function( delay){
@@ -63,5 +72,7 @@ proto.then(async function(){
 		console.log( result)
 	}
 	console.log("results are interleaved in the order they appears- muxed together")
+	console.log("")
+	console.log("as a final feature, results of each iterator are available (via a `dones` property):")
+	console.log( muxer.dones.get( alpha))
 })
-
