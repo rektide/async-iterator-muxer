@@ -45,7 +45,6 @@ export class AsyncIteratorMuxer extends Bound{
 			var
 			  cur= await Promise.race( this.nexts),
 			  index= this.iterators.indexOf( cur.iterator)
-			console.log({cur})
 
 			// pre- hooks
 			// spent a while getting fancy with interface & contract for how these might work
@@ -82,7 +81,7 @@ export class AsyncIteratorMuxer extends Bound{
 				}
 			}else{
 				// we've consumed the current "next", so advance
-				this.nexts[ index]= this.iterators[ index].next()
+				this.nexts[ index]= resolveNext( this.iterators[ index])
 			}
 
 			yield returnValue
