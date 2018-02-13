@@ -16,11 +16,13 @@ async function muxerRun( options, ...inputs){
 	return outputs
 }
 
-async function* asyncIter( ...inputs){
-	for( var i of inputs){
-		yield input
+async function *asyncIter( ...inputs){
+	// delay
+	await new Promise( resolve=> setTimeout( resolve, 30))
+	for( var input of inputs){
 		// be really async please
 		await Promise.resolve()
+		yield input
 	}
 }
 
@@ -59,6 +61,5 @@ tape( "can mux an async and a synchronous iterable", async function( t){
 	t.equal( muxer[ 1], 43, "second output is 43")
 	t.equal( muxer[ 2], 44, "third output is 44")
 	t.equal( muxer[ 3], 45, "third output is 45")
-	t.end()
 	t.end()
 })

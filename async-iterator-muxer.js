@@ -84,7 +84,9 @@ export class AsyncIteratorMuxer extends Bound{
 				this.nexts[ index]= resolveNext( this.iterators[ index])
 			}
 
-			yield returnValue
+			if( !cur.done|| this.yieldDones){
+				yield returnValue
+			}
 		}
 	}
 	add( iterable){
