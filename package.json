@@ -4,7 +4,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "node --harmony_async_iteration .test"
 	},
 	"repository": {
 		"type": "git",
@@ -23,6 +23,10 @@
 	},
 	"dependencies": {
 		"@std/esm": "^0.21.5",
-		"extensible-function": "^1.1.1"
+		"extensible-function": "^1.1.1",
+		"p-defer": "^1.0.0"
+	},
+	"devDependencies": {
+		"tape": "^4.8.0"
 	}
 }
