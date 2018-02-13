@@ -6,37 +6,6 @@ var
   maxMs= 3000,
   results= 5
 
-async function Delay( min, max){
-	min= min|| minMs
-	max= max|| maxMs
-	var delay= Math.floor( Math.random() *( max- min))+ min
-	await new Promise( resolve=> setTimeout( resolve, delay))
-	return delay
-}
-
-async function *SampleGenerator( name, t){
-	t= t|| 0
-	// iterate this many times
-	var remaining= results
-
-	// in each loop, delay, then produce a result
-	async function loop(){
-		var delay= await Delay()
-		t+= delay
-		return {t, delay, remaining, name}
-	}
-	// yield, for however many iterations we have
-	while( remaining--){
-		yield loop()
-	}
-
-	// return a final result
-	var result= await loop()
-	// mark it up just to be super clear
-	result.isResult= true
-	return result
-}
-
 console.log("a SampleGenerator is an async-iterator delivering a series of results, waiting a random time between deliveries")
 console.log("each result consists of:")
 console.log("* t, total time since generator was constructed,")
@@ -76,3 +45,36 @@ proto.then(async function(){
 	console.log("as a final feature, results of each iterator are available (via a `dones` property):")
 	console.log( muxer.dones.get( alpha))
 })
+
+async function Delay( min, max){
+	min= min|| minMs
+	max= max|| maxMs
+	var delay= Math.floor( Math.random() *( max- min))+ min
+	await new Promise( resolve=> setTimeout( resolve, delay))
+	return delay
+}
+
+async function *SampleGenerator( name, t){
+	t= t|| 0
+	// iterate this many times
+	var remaining= results
+
+	// in each loop, delay, then produce a result
+	async function loop(){
+		var delay= await Delay()
+		t+= delay
+		return {t, delay, remaining, name}
+	}
+	// yield, for however many iterations we have
+	while( remaining--){
+		yield loop()
+	}
+
+	// return a final result
+	var result= await loop()
+	// mark it up just to be super clear
+	result.isResult= true
+	return result
+}
+
+
