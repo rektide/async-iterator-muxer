@@ -1,4 +1,3 @@
-import { Bound} from "extensible-function/async-generator.js"
 import defer from "p-defer"
 
 /**
@@ -19,14 +18,21 @@ async function resolveNext( iterator){
 	}
 }
 
-export class AsyncIteratorMuxer extends Bound{
+export class AsyncIteratorMuxer{
 	/**
 	* @param iterables - collection of async or sync iterables, or iterators
 	*/
 	constructor( options, iterables){
-		super( AsyncIteratorMuxer.prototype[ Symbol.asyncIterator])
+		//super( AsyncIteratorMuxer.prototype[ Symbol.asyncIterator])
 		this.iterators= []
 		this.nexts= []
+		this.dones= new WeakMap()
+		Object.defineProperties( this, {
+			// reverse map from iterator to original iterable
+			_iterables: {
+				value: new WeakMap()
+			}
+		})
 		Object.assign( this, options)
 		for( var i of iterables|| []){
 			this.add( i)
@@ -50,26 +56,37 @@ export class AsyncIteratorMuxer extends Bound{
 			// spent a while getting fancy with interface & contract for how these might work
 			// lower level than desireable, but modify in place vastly simplified this codebase &
 			// no worse than almost all alternative ideas I cooked up
-			if( cur.resolved&& this.onresolve){
+			if( cur.done&& this.ondone){
+				await this.ondone( cur, this)
+			}else if( cur.resolved&& this.onresolve){
 				await this.onresolve( cur, this)
-			}
-			if( cur.rejected&& this.onreject){
+			}else if( cur.rejected&& this.onreject){
 				await this.onreject( cur, this)
 			}
 
 			// handle end of whichever iterator
-			// by default, return the value
-			var returnValue= !this.leaveWrapped? cur.value: cur
-			if( cur.done){
-				// remove this iterator
+			// this first part must always be run- cleanup
+			// `doneAndYield` allows ondone handlers to coerce `done` into a yielded result while still running essential logic
+			if( cur.done|| cur.doneAndYield){
+				// save return value
+				// lookup the iterable or iterator the user added originally
+				var iterable= this._iterables.get( cur.iterator)
+				if( iterable){
+					// save the return value for the iterable or iterator
+					// note only most recent value for any given iterable is saved
+					// but user can work-around by adding distinct iterators directly
+					this.dones.set( iterable, cur.value)
+				}
+
+				// remove this iterator since it's done
 				this.iterators.splice( index, 1)
 				this.nexts.splice( index, 1)
 
-				// handle running out of iterators
+				// handle running out of iterators, if we're in `leaveOpen` mode.
 				if( this.iterators.length=== 0){
-					if( !this.leaveOpen){
+					if( !this.leaveOpen&& !cur.leaveOpen){
 						// terminate looping - default
-						return returnValue
+						return this.dones
 					}else{
 						// in `leaveOpen` mode we await additional 
 						// wait for a new iterator to be added
@@ -84,10 +101,12 @@ export class AsyncIteratorMuxer extends Bound{
 				this.nexts[ index]= resolveNext( this.iterators[ index])
 			}
 
-			if( !cur.done|| this.yieldDones){
-				yield returnValue
+			// yield normal results
+			if( !cur.skip&&( !cur.done|| this.yieldDones)){
+				yield !this.leaveWrapped? cur.value: cur
 			}
 		}
+		return this.dones
 	}
 	add( iterable){
 		// find an iterator
@@ -108,6 +127,8 @@ export class AsyncIteratorMuxer extends Bound{
 		// add it to our collection of iterators
 		this.iterators.push( iterator)
 		this.nexts.push( next)
+		// weak lookup of original iterable from an iterator, for `dones`
+		this._iterables.set( iterator, iterable)
 
 		// if we are iterating in `leaveOpen` mode & run out of stuff,
 		// now is the time when we have new stuff! signal to it.
