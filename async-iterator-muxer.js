@@ -72,6 +72,9 @@ export class AsyncIteratorMuxer{
 			var
 			  cur= await Promise.race( this.nexts),
 			  index= this.iterators.indexOf( cur.iterator)
+			if( index=== -1){
+				throw new Error("Could not find expected iterator")
+			}
 
 			// pre- hooks
 			// spent a while getting fancy with interface & contract for how these might work
@@ -104,6 +107,7 @@ export class AsyncIteratorMuxer{
 				this.nexts.splice( index, 1)
 
 				// handle running out of iterators, if we're in `leaveOpen` mode.
+				await Promise.resolve()
 				if( this.iterators.length=== 0){
 					if( !this.leaveOpen&& !cur.leaveOpen){
 						// terminate looping - default
@@ -139,9 +143,9 @@ export class AsyncIteratorMuxer{
 		if( iterable.then){
 			// resolveNext takes care of awaiting the iterator such that .nexts works without issue
 			// but we have to swap the iterator into .iterators once resolveNext resolves it
-			var pos= this.iterators.length
 			next.then( cur=> {
-				this.iterators[ pos]= cur.iterator
+				var index= this.iterators.indexOf( iterator)
+				this.iterators[ index]= cur.iterator
 			})
 		}
 
