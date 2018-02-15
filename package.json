@@ -1,8 +1,11 @@
 {
 	"name": "async-iterator-muxer",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "Mux/multiplex together multiple sync and async iterables or iterators into one async iterator.",
 	"main": "index.js",
+	"module": "async-iterator-muxer.js",
+	"esnext": "async-iterator-muxer.js",
+	"es:next": "async-iterator-muxer.js",
 	"scripts": {
 		"test": "node --harmony_async_iteration .test",
 		"example": "node --harmony_async_iteration .example/sample-generator.js",
@@ -19,7 +22,6 @@
 	],
 	"author": "rektide de la faye",
 	"license": "MIT",
-	"module": "async-iterator-muxer.js",
 	"esm": true,
 	"@std/esm": {
 		"esm": "js",
