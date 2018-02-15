@@ -1,6 +1,6 @@
 {
 	"name": "async-iterator-muxer",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"description": "Mux/multiplex together multiple sync and async iterables or iterators into one async iterator.",
 	"main": "index.js",
 	"scripts": {
@@ -12,7 +12,11 @@
 		"type": "git",
 		"url": "https://archive.voodoowarez.com/async-iterator-muxer"
 	},
-	"keywords": ["mux", "multiple", "async-iteration"],
+	"keywords": [
+		"mux",
+		"multiple",
+		"async-iteration"
+	],
 	"author": "rektide de la faye",
 	"license": "MIT",
 	"module": "async-iterator-muxer.js",

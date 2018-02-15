@@ -5,6 +5,13 @@ import defer from "p-defer"
 * Additionall attach an `index` field with the index number of this item in a collection.
 */
 async function resolveNext( iterator){
+	if( iterator.then){
+		// we only expect this the the first time we .add a promise
+		// rather than an iterable
+		iterator= await iterator
+		// that promise is probably? an iterable - get iterator now
+		iterator= findIterator( iterator)
+	}
 	try{
 		var val= await iterator.next()
 		val.iterator= iterator
@@ -16,6 +23,20 @@ async function resolveNext( iterator){
 			iterator
 		}
 	}
+}
+
+function findIterator( iterable){
+	var iterator= iterable
+	if( iterable[ Symbol.asyncIterator]){
+		iterator= iterable[ Symbol.asyncIterator]()
+	}else if( iterable[ Symbol.iterator]){
+		iterator= iterable[ Symbol.iterator]()
+	}
+	if( !iterator&& iterable.next){
+		// allow iterators directly to be passed in too
+		iterator= iterable
+	}
+	return iterator
 }
 
 export class AsyncIteratorMuxer{
@@ -109,22 +130,22 @@ export class AsyncIteratorMuxer{
 		return this.dones
 	}
 	add( iterable){
-		// find an iterator
-		var iterator
-		if( iterable[ Symbol.asyncIterator]){
-			iterator= iterable[ Symbol.asyncIterator]()
-		}else if( iterable[ Symbol.iterator]){
-			iterator= iterable[ Symbol.iterator]()
-		}
-		if( !iterator&& iterable.next){
-			// allow iterators directly to be passed in too
-			iterator= iterable
-		}
-
-		// wrap iterator
+		// find an iterator from whats passed in
+		var iterator= findIterator( iterable)
+		// wrap iterator (and resolve first, if iterable is a promise for an iterable)
 		var next= resolveNext( iterator)
 
-		// add it to our collection of iterators
+		// we're really waiting for an iterable atm
+		if( iterable.then){
+			// resolveNext takes care of awaiting the iterator such that .nexts works without issue
+			// but we have to swap the iterator into .iterators once resolveNext resolves it
+			var pos= this.iterators.length
+			next.then( cur=> {
+				this.iterators[ pos]= cur.iterator
+			})
+		}
+
+		// add iterator/next to our collections of in-flight stuff
 		this.iterators.push( iterator)
 		this.nexts.push( next)
 		// weak lookup of original iterable from an iterator, for `dones`

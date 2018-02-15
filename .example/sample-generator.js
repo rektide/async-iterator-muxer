@@ -76,5 +76,3 @@ async function *SampleGenerator( name, t){
 	result.isResult= true
 	return result
 }
-
-

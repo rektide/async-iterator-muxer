@@ -63,3 +63,25 @@ tape( "can mux an async and a synchronous iterable", async function( t){
 	t.equal( muxer[ 3], 45, "third output is 45")
 	t.end()
 })
+
+tape( "can add a promise to a muxer", async function( t){
+	t.plan( 3)
+	var
+	  promisedIterable= Promise.resolve([ 99, 100]),
+	  muxer= await muxerRun( null, promisedIterable)
+	t.equal( muxer.length, 2, "output is 2 elements")
+	t.equal( muxer[ 0], 99, "first output is 99")
+	t.equal( muxer[ 1], 100, "second output is 100")
+	t.end()
+})
+
+tape( "can add a delayed iterable to a muxer", async function( t){
+	t.plan( 3)
+	var
+	  promisedIterable= new Promise(resolve=> setTimeout(()=> resolve([1024, 1025]), 50)),
+	  muxer= await muxerRun( null, promisedIterable)
+	t.equal( muxer.length, 2, "output is 2 elements")
+	t.equal( muxer[ 0], 1024, "first output is 1024")
+	t.equal( muxer[ 1], 1025, "second output is 1025")
+	t.end()
+})
