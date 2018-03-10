@@ -16,10 +16,17 @@
 ```
 import AsyncIteratorMuxer from "async-iterator-muxer"
 var muxer= new AsyncIteratorMuxer()
+
 // ....
+
+// add some sync & async iterables
 muxer.add( myAsyncIterable)
 muxer.add( myIterable)
 muxer.add( anotherIterable)
+// can also add a promise that resolves to something iterable
+muxer.add( Promise.resolve([ 4, 5, 6])
+
+// iterate through all outputs as they arrive
 for await( var output of muxer){ // for-await must be run inside an async-function, not shown here
 	console.log( output)
 }
