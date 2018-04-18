@@ -1,6 +1,6 @@
 {
 	"name": "async-iterator-muxer",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"description": "Mux/multiplex together multiple sync and async iterables or iterators into one async iterator.",
 	"main": "index.js",
 	"module": "async-iterator-muxer.js",
@@ -24,16 +24,15 @@
 	"author": "rektide de la faye",
 	"license": "MIT",
 	"@std/esm": {
-		"esm": "js",
 		"cjs": {
 			"namedExports": true
 		}
 	},
 	"dependencies": {
-		"@std/esm": "^0.21.5",
 		"p-defer": "^1.0.0"
 	},
 	"devDependencies": {
+		"esm": "^3.0.19",
 		"tape": "^4.8.0"
 	}
 }
